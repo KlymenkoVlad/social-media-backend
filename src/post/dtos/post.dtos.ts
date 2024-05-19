@@ -18,3 +18,8 @@ export class CreatePostDto {
   @IsNumber()
   userId: number;
 }
+
+export class CommentPost {
+  @IsString()
+  text: string;
+}

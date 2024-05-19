@@ -43,7 +43,7 @@ model Post {
 
 model Like {
   id      Int  @id @default(autoincrement())
-  user_id Int
+  user_id Int  @unique
   post_id Int
   post    Post @relation(fields: [post_id], references: [id])
   user    User @relation("user_likes", fields: [user_id], references: [id])

@@ -23,8 +23,8 @@ interface LoginParams {
   password: string;
 }
 
-const generateJWT = (name: string, id: number) => {
-  return jwt.sign({ id, name }, process.env.JSON_TOKEN_SECRET, {
+const generateJWT = (username: string, id: number) => {
+  return jwt.sign({ id, username }, process.env.JSON_TOKEN_SECRET, {
     expiresIn: '14d',
   });
 };
@@ -33,9 +33,9 @@ const generateJWT = (name: string, id: number) => {
 export class AuthService {
   constructor(private readonly prismaService: PrismaService) {}
   async signup(data: SignupParams) {
-    const userExists = await this.prismaService.user.findUnique({
+    const userExists = await this.prismaService.user.findFirst({
       where: {
-        email: data.email,
+        OR: [{ email: data.email }, { username: data.username }],
       },
     });
 
@@ -52,7 +52,7 @@ export class AuthService {
       },
     });
 
-    const token = generateJWT(user.name, user.id);
+    const token = generateJWT(user.username, user.id);
 
     return {
       status: 'success',
@@ -77,7 +77,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = generateJWT(user.name, user.id);
+    const token = generateJWT(user.username, user.id);
 
     return {
       status: 'success',

@@ -26,27 +26,31 @@ model User {
   posts       Post[]
   likes       Like[]    @relation("user_likes")
   comments    Comment[] @relation("user_comments")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 }
 
 model Post {
   id         Int       @id @default(autoincrement())
-  title      String?
-  text       String
+  title      String
+  text       String?
   image_url  String?
   user_id    Int
   user       User      @relation(fields: [user_id], references: [id])
   likes      Like[]
   comments   Comment[]
   created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  updated_at DateTime  @updatedAt 
 }
 
 model Like {
   id      Int  @id @default(autoincrement())
-  user_id Int  @unique
-  post_id Int
+  user_id Int  
+  post_id Int  @unique
   post    Post @relation(fields: [post_id], references: [id])
   user    User @relation("user_likes", fields: [user_id], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt 
 }
 
 model Comment {
@@ -56,4 +60,6 @@ model Comment {
   post_id Int
   post    Post   @relation(fields: [post_id], references: [id])
   user    User   @relation("user_comments", fields: [user_id], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt 
 }

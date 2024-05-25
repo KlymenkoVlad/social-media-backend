@@ -16,6 +16,7 @@ export class SignupDto {
 
   @IsString()
   @IsLowercase()
+  @MinLength(3)
   username: string;
 
   @IsOptional()

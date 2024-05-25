@@ -24,13 +24,29 @@ export class PostController {
   @UseGuards(AuthGuard)
   @UsePipes(ValidationPipe)
   @Post()
-  async createPost(@Body() body: CreatePostDto) {
-    return this.postService.createPost(body);
+  async createPost(@User() user: UserPayload, @Body() body: CreatePostDto) {
+    return this.postService.createPost(body, user.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  @HttpCode(204)
+  async deletePost(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: UserPayload,
+  ) {
+    return this.postService.deletePost(id, user.id);
   }
 
   @Get()
   async getAllPosts() {
     return this.postService.getAllPosts();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('myposts')
+  async getMyPosts(@User() user: UserPayload) {
+    return this.postService.getMyPosts(user);
   }
 
   @Get(':id')
@@ -52,10 +68,10 @@ export class PostController {
   @Post('comment/:postId')
   async commentPost(
     @Param('postId', ParseIntPipe) postId: number,
-    @Body() body: CommentPost,
+    @Body() { text }: CommentPost,
     @User() user: UserPayload,
   ) {
-    return this.postService.commentPost(postId, body, user);
+    return this.postService.commentPost(postId, text, user);
   }
 
   @HttpCode(204)

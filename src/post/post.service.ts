@@ -10,20 +10,19 @@ interface CreatePostParams {
   title?: string;
   text: string;
   imageUrl?: string;
-  userId: number;
 }
 
 @Injectable()
 export class PostService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async createPost(data: CreatePostParams) {
+  async createPost(data: CreatePostParams, userId: number) {
     const post = await this.prismaService.post.create({
       data: {
         title: data.title,
         text: data.text,
         image_url: data.imageUrl,
-        user_id: data.userId,
+        user_id: userId,
       },
     });
 
@@ -34,7 +33,31 @@ export class PostService {
   }
 
   async getAllPosts() {
-    const posts = await this.prismaService.post.findMany();
+    const posts = await this.prismaService.post.findMany({
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
 
     return {
       status: 'success',
@@ -60,8 +83,6 @@ export class PostService {
       where: { user_id: user.id, post_id: id },
     });
 
-    console.log(like);
-
     if (like) {
       await this.prismaService.like.delete({
         where: { post_id: id, user_id: user.id },
@@ -79,14 +100,26 @@ export class PostService {
     }
   }
 
-  async commentPost(postId: number, body: { text: string }, user: UserPayload) {
-    return this.prismaService.comment.create({
+  async commentPost(postId: number, text: string, user: UserPayload) {
+    const post = await this.prismaService.post.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with id ${postId} does not exist`);
+    }
+
+    const comment = await this.prismaService.comment.create({
       data: {
-        text: body.text,
+        text,
         user_id: user.id,
         post_id: postId,
       },
     });
+
+    return comment;
   }
 
   async deleteComment(commentId: number, user: UserPayload) {
@@ -103,5 +136,24 @@ export class PostService {
     }
 
     return 'deleted';
+  }
+
+  async getMyPosts(user: UserPayload) {
+    const posts = await this.prismaService.post.findMany({
+      where: { user_id: user.id },
+    });
+
+    return posts;
+  }
+
+  async deletePost(id: number, userId: number) {
+    await this.prismaService.post.delete({
+      where: {
+        id,
+        user_id: userId,
+      },
+    });
+
+    return null;
   }
 }

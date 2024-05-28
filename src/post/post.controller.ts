@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -39,8 +40,11 @@ export class PostController {
   }
 
   @Get()
-  async getAllPosts() {
-    return this.postService.getAllPosts();
+  async getAllPosts(@Query('cursor') cursor?: number, @Query('take') take = 2) {
+    return this.postService.getAllInfiniteScrollPosts(
+      (cursor = +cursor),
+      (take = +take),
+    );
   }
 
   @UseGuards(AuthGuard)

@@ -33,6 +33,7 @@ export class PostService {
   }
 
   async getAllPosts() {
+    // Fetch one extra record to check for next page
     const posts = await this.prismaService.post.findMany({
       include: {
         likes: true,
@@ -57,11 +58,66 @@ export class PostService {
           },
         },
       },
+      orderBy: {
+        id: 'desc',
+      },
     });
 
     return {
       status: 'success',
       posts,
+      postsLength: posts.length,
+    };
+  }
+
+  async getAllInfiniteScrollPosts(cursor?: number, take = 2) {
+    // Fetch one extra record to check for next page
+    const posts = await this.prismaService.post.findMany({
+      take: take + 1, // Fetch one extra record
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        id: 'desc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop(); // Remove the extra record
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
+      posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
     };
   }
 
@@ -140,7 +196,36 @@ export class PostService {
 
   async getMyPosts(user: UserPayload) {
     const posts = await this.prismaService.post.findMany({
-      where: { user_id: user.id },
+      where: {
+        user_id: user.id,
+      },
+      take: 4,
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
 
     return posts;

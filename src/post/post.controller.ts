@@ -2,13 +2,18 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
   HttpCode,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   ParseIntPipe,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,6 +22,8 @@ import { CommentPost, CreatePostDto } from './dtos/post.dtos';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/user/decorators/user.decorators';
 import { UserPayload } from 'src/interfaces/user.interfaces';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 
 @Controller('post')
 export class PostController {
@@ -86,5 +93,21 @@ export class PostController {
     @User() user: UserPayload,
   ) {
     return this.postService.deleteComment(commentId, user);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 4 }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.postService.imageUpload(file);
   }
 }

@@ -1,10 +1,15 @@
+import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+
 import { UserPayload } from 'src/interfaces/user.interfaces';
 import { PrismaService } from 'src/prisma/prisma.service';
+import * as FormData from 'form-data';
+import { lastValueFrom } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
 
 interface CreatePostParams {
   title?: string;
@@ -14,7 +19,11 @@ interface CreatePostParams {
 
 @Injectable()
 export class PostService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async createPost(data: CreatePostParams, userId: number) {
     const post = await this.prismaService.post.create({
@@ -23,6 +32,30 @@ export class PostService {
         text: data.text,
         image_url: data.imageUrl,
         user_id: userId,
+      },
+
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
@@ -173,6 +206,19 @@ export class PostService {
         user_id: user.id,
         post_id: postId,
       },
+      select: {
+        text: true,
+        user_id: true,
+        id: true,
+        created_at: true,
+        updated_at: true,
+        post_id: true,
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
 
     return comment;
@@ -240,5 +286,39 @@ export class PostService {
     });
 
     return null;
+  }
+
+  async imageUpload(file: Express.Multer.File): Promise<object> {
+    const formData = new FormData();
+    formData.append('file', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+    formData.append('upload_preset', 'social_media');
+
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          `https://api.cloudinary.com/v1_1/${this.configService.get<string>('CLOUDINARY_NAME')}/image/upload`,
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+            },
+          },
+        ),
+      );
+
+      return {
+        status: 'success',
+        url: response.data.secure_url,
+      };
+    } catch (error) {
+      console.error(
+        'Error uploading image:',
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
   }
 }

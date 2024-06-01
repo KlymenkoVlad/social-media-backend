@@ -103,8 +103,9 @@ export class PostService {
     };
   }
 
-  async getAllInfiniteScrollPosts(cursor?: number, take = 2) {
+  async getAllInfiniteScrollPosts(cursor?: number, take = 2, sortBy?: string) {
     // Fetch one extra record to check for next page
+
     const posts = await this.prismaService.post.findMany({
       take: take + 1, // Fetch one extra record
       cursor: cursor ? { id: cursor } : undefined,
@@ -133,14 +134,72 @@ export class PostService {
         },
       },
       orderBy: {
-        id: 'desc',
+        created_at: sortBy === 'new' ? 'desc' : 'asc',
       },
     });
 
     let hasNextPage = false;
     if (posts.length > take) {
       hasNextPage = true;
-      posts.pop(); // Remove the extra record
+      posts.pop();
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
+      posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
+    };
+  }
+
+  async getPostsByUserId(
+    id: number,
+    cursor?: number,
+    sortBy?: string,
+    take = 2,
+  ) {
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        user_id: id,
+      },
+      take: take + 1, // Fetch one extra record
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: sortBy === 'new' ? 'desc' : 'asc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop();
     }
 
     const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;

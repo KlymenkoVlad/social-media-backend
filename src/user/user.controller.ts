@@ -4,8 +4,8 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseIntPipe,
   UseGuards,
-  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './decorators/user.decorators';
@@ -30,10 +30,10 @@ export class UserController {
     };
   }
 
-  @Get(':username')
+  @Get(':id')
   @UseGuards(AuthGuard)
-  getUserByUsername(@Param('username', ValidationPipe) username: string) {
-    return this.userService.getUserByUsername(username);
+  getUserByUsername(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.getUserById(id);
   }
 
   @HttpCode(204)

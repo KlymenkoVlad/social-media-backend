@@ -1,10 +1,15 @@
+import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+
 import { UserPayload } from 'src/interfaces/user.interfaces';
 import { PrismaService } from 'src/prisma/prisma.service';
+import * as FormData from 'form-data';
+import { lastValueFrom } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
 
 interface CreatePostParams {
   title?: string;
@@ -14,7 +19,11 @@ interface CreatePostParams {
 
 @Injectable()
 export class PostService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async createPost(data: CreatePostParams, userId: number) {
     const post = await this.prismaService.post.create({
@@ -24,16 +33,7 @@ export class PostService {
         image_url: data.imageUrl,
         user_id: userId,
       },
-    });
 
-    return {
-      status: 'success',
-      post,
-    };
-  }
-
-  async getAllPosts() {
-    const posts = await this.prismaService.post.findMany({
       include: {
         likes: true,
         comments: {
@@ -61,7 +61,128 @@ export class PostService {
 
     return {
       status: 'success',
+      post,
+    };
+  }
+
+  async deletePost(id: number, userId: number) {
+    await this.prismaService.post.delete({
+      where: {
+        id,
+        user_id: userId,
+      },
+    });
+
+    return null;
+  }
+
+  async getAllPosts(cursor?: number, take = 2, sortBy?: string) {
+    // Fetch one extra record to check for next page
+
+    const posts = await this.prismaService.post.findMany({
+      take: take + 1, // Fetch one extra record
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: sortBy === 'new' ? 'desc' : 'asc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop();
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
       posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
+    };
+  }
+
+  async getAllPostsByUserId(
+    id: number,
+    cursor?: number,
+    sortBy?: string,
+    take = 2,
+  ) {
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        user_id: id,
+      },
+      take: take + 1, // Fetch one extra record
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
+      include: {
+        likes: true,
+        comments: {
+          select: {
+            text: true,
+            user_id: true,
+            id: true,
+            created_at: true,
+            updated_at: true,
+            post_id: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: sortBy === 'new' ? 'desc' : 'asc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop();
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
+      posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
     };
   }
 
@@ -117,6 +238,19 @@ export class PostService {
         user_id: user.id,
         post_id: postId,
       },
+      select: {
+        text: true,
+        user_id: true,
+        id: true,
+        created_at: true,
+        updated_at: true,
+        post_id: true,
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
 
     return comment;
@@ -138,22 +272,37 @@ export class PostService {
     return 'deleted';
   }
 
-  async getMyPosts(user: UserPayload) {
-    const posts = await this.prismaService.post.findMany({
-      where: { user_id: user.id },
+  async imageUpload(file: Express.Multer.File): Promise<object> {
+    const formData = new FormData();
+    formData.append('file', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
     });
+    formData.append('upload_preset', 'social_media');
 
-    return posts;
-  }
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          `https://api.cloudinary.com/v1_1/${this.configService.get<string>('CLOUDINARY_NAME')}/image/upload`,
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+            },
+          },
+        ),
+      );
 
-  async deletePost(id: number, userId: number) {
-    await this.prismaService.post.delete({
-      where: {
-        id,
-        user_id: userId,
-      },
-    });
-
-    return null;
+      return {
+        status: 'success',
+        url: response.data.secure_url,
+      };
+    } catch (error) {
+      console.error(
+        'Error uploading image:',
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
   }
 }

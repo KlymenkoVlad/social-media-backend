@@ -4,9 +4,9 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 export class CreatePostDto {
   @IsString()
   @MaxLength(50)
+  @IsOptional()
   title: string;
 
-  @IsOptional()
   @IsString()
   text: string;
 

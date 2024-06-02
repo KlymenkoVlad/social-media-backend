@@ -1,16 +1,23 @@
 import {
+  BadRequestException,
+  Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
   Param,
   ParseIntPipe,
+  Patch,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './decorators/user.decorators';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UserPayload } from 'src/interfaces/user.interfaces';
+import { UserUpdatePasswordDto, UserUpdateProfileDto } from './dtos/user.dtos';
 
 //TODO: add update route
 
@@ -20,7 +27,7 @@ export class UserController {
 
   @Get('me')
   @UseGuards(AuthGuard)
-  me(@User() user: UserPayload) {
+  getMe(@User() user: UserPayload) {
     return {
       status: 'success',
       user: {
@@ -32,7 +39,7 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(AuthGuard)
-  getUserByUsername(@Param('id', ParseIntPipe) id: number) {
+  getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id);
   }
 
@@ -41,6 +48,46 @@ export class UserController {
   @UseGuards(AuthGuard)
   deleteUser(@User() user: UserPayload) {
     return this.userService.deleteUser(user.id);
+  }
+
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
+  @UseGuards(AuthGuard)
+  @Patch('')
+  async updateUser(
+    @User() user: UserPayload,
+    @Body() body: UserUpdateProfileDto,
+  ) {
+    try {
+      await this.userService.updateUser(user.id, body);
+      return;
+    } catch (error) {
+      throw new ConflictException(error.message);
+    }
+  }
+
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
+  @UseGuards(AuthGuard)
+  @Patch('password')
+  async updatePassword(
+    @User() user: UserPayload,
+    @Body() body: UserUpdatePasswordDto,
+  ) {
+    try {
+      await this.userService.updatePassword(user.id, body);
+      return;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   @Get('')

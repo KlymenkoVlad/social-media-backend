@@ -52,7 +52,7 @@ export class PostController {
     @Query('take') take = 2,
     @Query('sortBy') sortBy?: string,
   ) {
-    return this.postService.getAllInfiniteScrollPosts(
+    return this.postService.getAllPosts(
       (cursor = +cursor),
       (take = +take),
       sortBy,
@@ -60,20 +60,14 @@ export class PostController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('myposts')
-  async getMyPosts(@User() user: UserPayload) {
-    return this.postService.getMyPosts(user);
-  }
-
-  @UseGuards(AuthGuard)
   @Get('user/:id')
-  async getPostsByUserId(
+  async getAllPostsByUserId(
     @Param('id', ParseIntPipe) id: number,
     @Query('cursor') cursor?: number,
     @Query('take') take = 2,
     @Query('sortBy') sortBy?: string,
   ) {
-    return this.postService.getPostsByUserId(id, +cursor, sortBy, +take);
+    return this.postService.getAllPostsByUserId(id, +cursor, sortBy, +take);
   }
 
   @Get(':id')

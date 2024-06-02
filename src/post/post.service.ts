@@ -65,45 +65,18 @@ export class PostService {
     };
   }
 
-  async getAllPosts() {
-    // Fetch one extra record to check for next page
-    const posts = await this.prismaService.post.findMany({
-      include: {
-        likes: true,
-        comments: {
-          select: {
-            text: true,
-            user_id: true,
-            id: true,
-            created_at: true,
-            updated_at: true,
-            post_id: true,
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            username: true,
-          },
-        },
-      },
-      orderBy: {
-        id: 'desc',
+  async deletePost(id: number, userId: number) {
+    await this.prismaService.post.delete({
+      where: {
+        id,
+        user_id: userId,
       },
     });
 
-    return {
-      status: 'success',
-      posts,
-      postsLength: posts.length,
-    };
+    return null;
   }
 
-  async getAllInfiniteScrollPosts(cursor?: number, take = 2, sortBy?: string) {
+  async getAllPosts(cursor?: number, take = 2, sortBy?: string) {
     // Fetch one extra record to check for next page
 
     const posts = await this.prismaService.post.findMany({
@@ -155,7 +128,7 @@ export class PostService {
     };
   }
 
-  async getPostsByUserId(
+  async getAllPostsByUserId(
     id: number,
     cursor?: number,
     sortBy?: string,
@@ -297,54 +270,6 @@ export class PostService {
     }
 
     return 'deleted';
-  }
-
-  async getMyPosts(user: UserPayload) {
-    const posts = await this.prismaService.post.findMany({
-      where: {
-        user_id: user.id,
-      },
-      take: 4,
-      include: {
-        likes: true,
-        comments: {
-          select: {
-            text: true,
-            user_id: true,
-            id: true,
-            created_at: true,
-            updated_at: true,
-            post_id: true,
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            username: true,
-          },
-        },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
-
-    return posts;
-  }
-
-  async deletePost(id: number, userId: number) {
-    await this.prismaService.post.delete({
-      where: {
-        id,
-        user_id: userId,
-      },
-    });
-
-    return null;
   }
 
   async imageUpload(file: Express.Multer.File): Promise<object> {

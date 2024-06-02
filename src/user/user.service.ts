@@ -1,5 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import * as bcrypt from 'bcryptjs';
+
+interface UpdateUserParams {
+  email: string;
+  name: string;
+  username: string;
+  surname: string;
+  age: number;
+  image_url: string;
+  description: string;
+}
+
+interface UpdatePasswordsParams {
+  oldPassword: string;
+  newPassword: string;
+}
 
 @Injectable()
 export class UserService {
@@ -33,5 +49,59 @@ export class UserService {
       status: 'success',
       users,
     };
+  }
+
+  async updateUser(id: number, user: UpdateUserParams) {
+    if (user.email) {
+      const userExists = await this.prismaService.user.findUnique({
+        where: { email: user.email },
+      });
+      if (userExists && userExists.id !== id) {
+        throw new Error('This email is already in use');
+      }
+    }
+
+    if (user.username) {
+      const userExists = await this.prismaService.user.findUnique({
+        where: { username: user.username },
+      });
+      if (userExists && userExists.id !== id) {
+        throw new Error('This username is already in use');
+      }
+    }
+
+    if (user.age) {
+      user.age = +user.age;
+    }
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: user,
+    });
+
+    return;
+  }
+
+  async updatePassword(id: number, passwords: UpdatePasswordsParams) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+
+    const isValidPassword = await bcrypt.compare(
+      passwords.oldPassword,
+      user.password,
+    );
+
+    if (!isValidPassword) {
+      throw new Error('Invalid password');
+    }
+
+    const hashedPassword = await bcrypt.hash(passwords.newPassword, 12);
+    await this.prismaService.user.update({
+      where: { id },
+      data: { password: hashedPassword },
+    });
+
+    return;
   }
 }

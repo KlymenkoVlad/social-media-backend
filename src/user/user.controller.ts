@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -98,5 +99,15 @@ export class UserController {
       status: 'success',
       users,
     };
+  }
+
+  @Get('username/:username')
+  @UseGuards(AuthGuard)
+  getUserByUsername(
+    @Param('username') username: string,
+    @Query('cursor') cursor?: number,
+    @Query('take') take = 3,
+  ) {
+    return this.userService.getUsersByUsername(username, cursor, take);
   }
 }

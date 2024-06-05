@@ -16,7 +16,7 @@ export class CreatePostDto {
   imageUrl: string;
 }
 
-export class CommentPost {
+export class CommentPostDto {
   @IsString()
   text: string;
 }

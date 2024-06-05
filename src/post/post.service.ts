@@ -17,6 +17,30 @@ interface CreatePostParams {
   imageUrl?: string;
 }
 
+const PostInclude = {
+  likes: true,
+  comments: {
+    select: {
+      text: true,
+      user_id: true,
+      id: true,
+      created_at: true,
+      updated_at: true,
+      post_id: true,
+      user: {
+        select: {
+          username: true,
+        },
+      },
+    },
+  },
+  user: {
+    select: {
+      username: true,
+    },
+  },
+};
+
 @Injectable()
 export class PostService {
   constructor(
@@ -83,29 +107,7 @@ export class PostService {
       take: take + 1, // Fetch one extra record
       cursor: cursor ? { id: cursor } : undefined,
       skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
-      include: {
-        likes: true,
-        comments: {
-          select: {
-            text: true,
-            user_id: true,
-            id: true,
-            created_at: true,
-            updated_at: true,
-            post_id: true,
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            username: true,
-          },
-        },
-      },
+      include: PostInclude,
       orderBy: {
         created_at: sortBy === 'new' ? 'desc' : 'asc',
       },
@@ -138,32 +140,10 @@ export class PostService {
       where: {
         user_id: id,
       },
-      take: take + 1, // Fetch one extra record
+      take: take + 1,
       cursor: cursor ? { id: cursor } : undefined,
-      skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
-      include: {
-        likes: true,
-        comments: {
-          select: {
-            text: true,
-            user_id: true,
-            id: true,
-            created_at: true,
-            updated_at: true,
-            post_id: true,
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            username: true,
-          },
-        },
-      },
+      skip: cursor ? 1 : 0,
+      include: PostInclude,
       orderBy: {
         created_at: sortBy === 'new' ? 'desc' : 'asc',
       },
@@ -196,6 +176,40 @@ export class PostService {
     return {
       status: 'success',
       post,
+    };
+  }
+
+  async findPosts(text: string, cursor?: number, take = 2) {
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        OR: [
+          { text: { contains: text, mode: 'insensitive' } },
+          { title: { contains: text, mode: 'insensitive' } },
+        ],
+      },
+      take: +take + 1,
+      cursor: +cursor ? { id: +cursor } : undefined,
+      skip: +cursor ? 1 : 0,
+      include: PostInclude,
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop();
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
+      posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
     };
   }
 

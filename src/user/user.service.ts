@@ -51,6 +51,39 @@ export class UserService {
     };
   }
 
+  async getUsersByUsername(username: string, cursor?: number, take = 3) {
+    const users = await this.prismaService.user.findMany({
+      where: {
+        username: {
+          contains: username,
+          mode: 'insensitive',
+        },
+      },
+      take: +take + 1,
+      cursor: +cursor ? { id: +cursor } : undefined,
+      skip: +cursor ? 1 : 0,
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (users.length > take) {
+      hasNextPage = true;
+      users.pop();
+    }
+
+    const nextCursor = users.length > 0 ? users[users.length - 1].id : null;
+
+    return {
+      status: 'success',
+      users,
+      nextCursor,
+      hasNextPage,
+      usersLength: users.length,
+    };
+  }
+
   async updateUser(id: number, user: UpdateUserParams) {
     if (user.email) {
       const userExists = await this.prismaService.user.findUnique({

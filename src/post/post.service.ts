@@ -30,6 +30,7 @@ const PostInclude = {
       user: {
         select: {
           username: true,
+          image_url: true,
         },
       },
     },
@@ -37,6 +38,7 @@ const PostInclude = {
   user: {
     select: {
       username: true,
+      image_url: true,
     },
   },
 };

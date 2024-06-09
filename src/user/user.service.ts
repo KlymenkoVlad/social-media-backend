@@ -21,6 +21,13 @@ interface UpdatePasswordsParams {
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async getMe(id: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    return user;
+  }
+
   async getUserById(id: number) {
     const user = await this.prismaService.user.findUnique({
       where: { id },
@@ -49,6 +56,47 @@ export class UserService {
       status: 'success',
       users,
     };
+  }
+
+  async getRecommendedUsers(userId: number) {
+    const users = await this.prismaService.user.findMany({
+      where: {
+        AND: [
+          {
+            id: {
+              not: userId,
+            },
+          },
+          {
+            id: {
+              not: userId,
+              notIn: [
+                ...(
+                  await this.prismaService.friendRequest.findMany({
+                    where: {
+                      OR: [{ senderId: userId }, { receiverId: userId }],
+                    },
+                    select: {
+                      senderId: true,
+                      receiverId: true,
+                    },
+                  })
+                ).flatMap((request) => [request.senderId, request.receiverId]),
+              ],
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        image_url: true,
+        username: true,
+        name: true,
+      },
+      take: 4,
+    });
+
+    return users;
   }
 
   async getUsersByUsername(username: string, cursor?: number, take = 3) {

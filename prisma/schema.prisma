@@ -22,8 +22,8 @@ enum FriendRequestStatus {
 model User {
   id               Int             @id @default(autoincrement())
   email            String          @unique
-  name             String
-  username         String          @unique
+  name             String          @db.VarChar(30)
+  username         String          @unique @db.VarChar(15)
   surname          String?
   age              Int?
   image_url        String?
@@ -52,14 +52,14 @@ model Friend {
 }
 
 model FriendRequest {
-  id         Int      @id @default(autoincrement())
+  id         Int                 @id @default(autoincrement())
   senderId   Int
   receiverId Int
   status     FriendRequestStatus @default(PENDING)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  sender     User     @relation("SentRequests", fields: [senderId], references: [id])
-  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  sender     User                @relation("SentRequests", fields: [senderId], references: [id])
+  receiver   User                @relation("ReceivedRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
 }
@@ -89,7 +89,7 @@ model Like {
 
 model Comment {
   id         Int      @id @default(autoincrement())
-  text       String
+  text       String   @db.VarChar(500)
   user_id    Int
   post_id    Int
   post       Post     @relation(fields: [post_id], references: [id])

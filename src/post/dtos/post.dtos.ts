@@ -17,6 +17,7 @@ export class CreatePostDto {
 }
 
 export class CommentPostDto {
+  @MaxLength(500)
   @IsString()
   text: string;
 }

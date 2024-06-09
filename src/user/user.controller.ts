@@ -29,13 +29,13 @@ export class UserController {
   @Get('me')
   @UseGuards(AuthGuard)
   getMe(@User() user: UserPayload) {
-    return {
-      status: 'success',
-      user: {
-        id: user.id,
-        username: user.username,
-      },
-    };
+    return this.userService.getMe(user.id);
+  }
+
+  @Get('recommendations')
+  @UseGuards(AuthGuard)
+  getRecommendedUsers(@User() user: UserPayload) {
+    return this.userService.getRecommendedUsers(user.id);
   }
 
   @Get(':id')

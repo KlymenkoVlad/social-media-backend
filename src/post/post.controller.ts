@@ -18,7 +18,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { PostService } from './post.service';
-import { CommentPost, CreatePostDto } from './dtos/post.dtos';
+import { CommentPostDto, CreatePostDto } from './dtos/post.dtos';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/user/decorators/user.decorators';
 import { UserPayload } from 'src/interfaces/user.interfaces';
@@ -60,6 +60,17 @@ export class PostController {
   }
 
   @UseGuards(AuthGuard)
+  @UsePipes(ValidationPipe)
+  @Get('search/:text')
+  async findPosts(
+    @Param('text') text: string,
+    @Query('cursor') cursor?: number,
+    @Query('take') take = 2,
+  ) {
+    return this.postService.findPosts(text, cursor, take);
+  }
+
+  @UseGuards(AuthGuard)
   @Get('user/:id')
   async getAllPostsByUserId(
     @Param('id', ParseIntPipe) id: number,
@@ -89,7 +100,7 @@ export class PostController {
   @Post('comment/:postId')
   async commentPost(
     @Param('postId', ParseIntPipe) postId: number,
-    @Body() { text }: CommentPost,
+    @Body() { text }: CommentPostDto,
     @User() user: UserPayload,
   ) {
     return this.postService.commentPost(postId, text, user);

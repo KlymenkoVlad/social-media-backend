@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -28,13 +29,13 @@ export class UserController {
   @Get('me')
   @UseGuards(AuthGuard)
   getMe(@User() user: UserPayload) {
-    return {
-      status: 'success',
-      user: {
-        id: user.id,
-        username: user.username,
-      },
-    };
+    return this.userService.getMe(user.id);
+  }
+
+  @Get('recommendations')
+  @UseGuards(AuthGuard)
+  getRecommendedUsers(@User() user: UserPayload) {
+    return this.userService.getRecommendedUsers(user.id);
   }
 
   @Get(':id')
@@ -98,5 +99,15 @@ export class UserController {
       status: 'success',
       users,
     };
+  }
+
+  @Get('username/:username')
+  @UseGuards(AuthGuard)
+  getUserByUsername(
+    @Param('username') username: string,
+    @Query('cursor') cursor?: number,
+    @Query('take') take = 3,
+  ) {
+    return this.userService.getUsersByUsername(username, cursor, take);
   }
 }

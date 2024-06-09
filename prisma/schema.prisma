@@ -13,21 +13,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
-  name        String
-  username    String    @unique
-  surname     String?
-  age         Int?
-  image_url   String?
-  description String?
-  password    String
-  posts       Post[]
-  likes       Like[]    @relation("user_likes")
-  comments    Comment[] @relation("user_comments")
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  id               Int             @id @default(autoincrement())
+  email            String          @unique
+  name             String          @db.VarChar(30)
+  username         String          @unique @db.VarChar(15)
+  surname          String?
+  age              Int?
+  image_url        String?
+  description      String?
+  password         String
+  posts            Post[]
+  likes            Like[]          @relation("user_likes")
+  comments         Comment[]       @relation("user_comments")
+  friends          Friend[]        @relation("user_friends")
+  friendOf         Friend[]        @relation("user_friendof")
+  sentRequests     FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Friend {
+  id       Int  @id @default(autoincrement())
+  userId   Int
+  friendId Int
+  user     User @relation("user_friends", fields: [userId], references: [id])
+  friend   User @relation("user_friendof", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+}
+
+model FriendRequest {
+  id         Int                 @id @default(autoincrement())
+  senderId   Int
+  receiverId Int
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  sender     User                @relation("SentRequests", fields: [senderId], references: [id])
+  receiver   User                @relation("ReceivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
 }
 
 model Post {
@@ -40,26 +74,26 @@ model Post {
   likes      Like[]
   comments   Comment[]
   created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt 
+  updated_at DateTime  @updatedAt
 }
 
 model Like {
-  id      Int  @id @default(autoincrement())
-  user_id Int  
-  post_id Int  @unique
-  post    Post @relation(fields: [post_id], references: [id])
-  user    User @relation("user_likes", fields: [user_id], references: [id])
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt 
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  post_id    Int      @unique
+  post       Post     @relation(fields: [post_id], references: [id])
+  user       User     @relation("user_likes", fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Comment {
-  id      Int    @id @default(autoincrement())
-  text    String
-  user_id Int
-  post_id Int
-  post    Post   @relation(fields: [post_id], references: [id])
-  user    User   @relation("user_comments", fields: [user_id], references: [id])
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt 
+  id         Int      @id @default(autoincrement())
+  text       String   @db.VarChar(500)
+  user_id    Int
+  post_id    Int
+  post       Post     @relation(fields: [post_id], references: [id])
+  user       User     @relation("user_comments", fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

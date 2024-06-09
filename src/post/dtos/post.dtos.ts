@@ -16,7 +16,8 @@ export class CreatePostDto {
   imageUrl: string;
 }
 
-export class CommentPost {
+export class CommentPostDto {
+  @MaxLength(500)
   @IsString()
   text: string;
 }

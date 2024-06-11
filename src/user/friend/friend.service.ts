@@ -51,7 +51,7 @@ export class FriendService {
       },
       orderBy: {
         createdAt: 'desc',
-      } as CustomFriendOrderByInput,
+      },
     });
 
     let hasNextPage = false;

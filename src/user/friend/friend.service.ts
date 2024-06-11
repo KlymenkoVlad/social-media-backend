@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+type CustomFriendOrderByInput = {
+  createdAt?: 'asc' | 'desc';
+};
+
 @Injectable()
 export class FriendService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -47,7 +51,7 @@ export class FriendService {
       },
       orderBy: {
         createdAt: 'desc',
-      },
+      } as CustomFriendOrderByInput,
     });
 
     let hasNextPage = false;

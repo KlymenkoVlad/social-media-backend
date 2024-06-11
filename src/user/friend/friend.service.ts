@@ -27,11 +27,53 @@ export class FriendService {
     return;
   }
 
+  async getFriendsWithPagination(userId: number, cursor?: number, take = 4) {
+    const friends = await this.prismaService.friend.findMany({
+      take: take + 1, // Fetch one extra record
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
+      where: {
+        userId,
+      },
+      include: {
+        friend: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image_url: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (friends.length > take) {
+      hasNextPage = true;
+      friends.pop();
+    }
+
+    const nextCursor =
+      friends.length > 0 ? friends[friends.length - 1].id : null;
+
+    return {
+      status: 'success',
+      friends,
+      nextCursor,
+      hasNextPage,
+      postsLength: friends.length,
+    };
+  }
+
   async getFriends(userId: number) {
     const friends = await this.prismaService.friend.findMany({
       where: {
         userId,
       },
+      take: 7,
       include: {
         friend: {
           select: {

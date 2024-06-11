@@ -46,7 +46,7 @@ export class FriendService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        updatedAt: 'desc',
       },
     });
 

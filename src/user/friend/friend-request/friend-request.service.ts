@@ -35,8 +35,6 @@ export class FriendRequestService {
       },
     });
 
-    console.log(myRequest);
-
     if (myRequest && myRequest.status === FriendRequestStatus.DECLINED) {
       throw new ConflictException('Friend request declined');
     }
@@ -53,8 +51,6 @@ export class FriendRequestService {
         receiverId: userId,
       },
     });
-
-    console.log(friendRequest);
 
     if (friendRequest && friendRequest.status === FriendRequestStatus.PENDING) {
       await this.prismaService.friend.create({

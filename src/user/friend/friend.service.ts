@@ -45,6 +45,9 @@ export class FriendService {
           },
         },
       },
+      orderBy: {
+        id: 'desc',
+      },
     });
 
     let hasNextPage = false;

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { Colors } from '@prisma/client';
 
 interface UpdateUserParams {
   email: string;
@@ -161,6 +162,15 @@ export class UserService {
     });
 
     return;
+  }
+
+  async updateColor(id: number, body: { color: string }) {
+    await this.prismaService.user.update({
+      where: { id },
+      data: {
+        profileColor: body.color as Colors,
+      },
+    });
   }
 
   async updatePassword(id: number, passwords: UpdatePasswordsParams) {

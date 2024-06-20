@@ -8,6 +8,7 @@ export class CreatePostDto {
   title: string;
 
   @IsString()
+  @MaxLength(3000)
   text: string;
 
   @IsOptional()

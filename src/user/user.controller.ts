@@ -18,7 +18,11 @@ import { UserService } from './user.service';
 import { User } from './decorators/user.decorators';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UserPayload } from 'src/interfaces/user.interfaces';
-import { UserUpdatePasswordDto, UserUpdateProfileDto } from './dtos/user.dtos';
+import {
+  ColorUpdate,
+  UserUpdatePasswordDto,
+  UserUpdateProfileDto,
+} from './dtos/user.dtos';
 
 //TODO: add update route
 
@@ -89,6 +93,12 @@ export class UserController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  @Patch('color')
+  async updateColor(@User() user: UserPayload, @Body() body: ColorUpdate) {
+    await this.userService.updateColor(user.id, body);
   }
 
   @Get('')

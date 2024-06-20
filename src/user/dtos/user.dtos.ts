@@ -1,5 +1,7 @@
+import { Colors } from '@prisma/client';
 import {
   IsEmail,
+  IsEnum,
   IsLowercase,
   IsOptional,
   IsString,
@@ -48,4 +50,9 @@ export class UserUpdatePasswordDto {
   @IsString()
   @MinLength(5)
   newPassword: string;
+}
+
+export class ColorUpdate {
+  @IsEnum(Colors)
+  color: Colors;
 }

@@ -19,6 +19,17 @@ enum FriendRequestStatus {
   DECLINED
 }
 
+enum Colors {
+  RED
+  BLUE
+  GREEN
+  YELLOW
+  ORANGE
+  PURPLE
+  PINK
+  GRAY
+}
+
 model User {
   id               Int             @id @default(autoincrement())
   email            String          @unique
@@ -30,6 +41,7 @@ model User {
   description      String?
   password         String
   posts            Post[]
+  profileColor     Colors          @default(GRAY)
   likes            Like[]          @relation("user_likes")
   comments         Comment[]       @relation("user_comments")
   friends          Friend[]        @relation("user_friends")
@@ -68,8 +80,8 @@ model FriendRequest {
 
 model Post {
   id         Int       @id @default(autoincrement())
-  title      String?
-  text       String
+  title      String?   @db.VarChar(50)
+  text       String    @db.VarChar(3000)
   image_url  String?
   user_id    Int
   user       User      @relation(fields: [user_id], references: [id])

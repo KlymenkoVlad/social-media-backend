@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "FriendRequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED');
 
+-- CreateEnum
+CREATE TYPE "Colors" AS ENUM ('ffcccc', 'cceeff', 'ccffcc', 'ffffcc', 'ffd9b3', 'e6ccff', 'ffccff', 'd9d9d9');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -12,6 +15,7 @@ CREATE TABLE "User" (
     "image_url" TEXT,
     "description" TEXT,
     "password" TEXT NOT NULL,
+    "profileColor" "Colors" NOT NULL DEFAULT 'd9d9d9',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -44,8 +48,8 @@ CREATE TABLE "FriendRequest" (
 -- CreateTable
 CREATE TABLE "Post" (
     "id" SERIAL NOT NULL,
-    "title" TEXT,
-    "text" TEXT NOT NULL,
+    "title" VARCHAR(50),
+    "text" VARCHAR(3000) NOT NULL,
     "image_url" TEXT,
     "user_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

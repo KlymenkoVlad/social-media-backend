@@ -15,6 +15,7 @@ interface CreatePostParams {
   title?: string;
   text: string;
   imageUrl?: string;
+  communityId?: number;
 }
 
 const PostInclude = {
@@ -41,6 +42,14 @@ const PostInclude = {
       image_url: true,
     },
   },
+
+  community: {
+    select: {
+      name: true,
+      image_url: true,
+      id: true,
+    },
+  },
 };
 
 @Injectable()
@@ -58,31 +67,10 @@ export class PostService {
         text: data.text,
         image_url: data.imageUrl,
         user_id: userId,
+        communityId: data.communityId,
       },
 
-      include: {
-        likes: true,
-        comments: {
-          select: {
-            text: true,
-            user_id: true,
-            id: true,
-            created_at: true,
-            updated_at: true,
-            post_id: true,
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        },
-        user: {
-          select: {
-            username: true,
-          },
-        },
-      },
+      include: PostInclude,
     });
 
     return {
@@ -102,7 +90,7 @@ export class PostService {
     return null;
   }
 
-  async getAllPosts(cursor?: number, take = 2, sortBy?: string) {
+  async getAllPosts(cursor?: number, take = 5, sortBy?: string) {
     // Fetch one extra record to check for next page
 
     const posts = await this.prismaService.post.findMany({
@@ -111,7 +99,7 @@ export class PostService {
       skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
       include: PostInclude,
       orderBy: {
-        created_at: sortBy === 'new' ? 'desc' : 'asc',
+        created_at: sortBy === 'old' ? 'asc' : 'desc',
       },
     });
 
@@ -136,18 +124,55 @@ export class PostService {
     id: number,
     cursor?: number,
     sortBy?: string,
-    take = 2,
+    take = 5,
   ) {
     const posts = await this.prismaService.post.findMany({
       where: {
         user_id: id,
+        communityId: null,
       },
       take: take + 1,
       cursor: cursor ? { id: cursor } : undefined,
       skip: cursor ? 1 : 0,
       include: PostInclude,
       orderBy: {
-        created_at: sortBy === 'new' ? 'desc' : 'asc',
+        created_at: sortBy === 'old' ? 'asc' : 'desc',
+      },
+    });
+
+    let hasNextPage = false;
+    if (posts.length > take) {
+      hasNextPage = true;
+      posts.pop();
+    }
+
+    const nextCursor = posts.length > 0 ? posts[posts.length - 1].id : null;
+
+    return {
+      status: 'success',
+      posts,
+      nextCursor,
+      hasNextPage,
+      postsLength: posts.length,
+    };
+  }
+
+  async getAllPostsByCommunityId(
+    id: number,
+    cursor?: number,
+    sortBy?: string,
+    take = 5,
+  ) {
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        communityId: id,
+      },
+      take: take + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
+      include: PostInclude,
+      orderBy: {
+        created_at: sortBy === 'old' ? 'asc' : 'desc',
       },
     });
 
@@ -181,7 +206,7 @@ export class PostService {
     };
   }
 
-  async findPosts(text: string, cursor?: number, take = 2) {
+  async findPosts(text: string, cursor?: number, take = 5) {
     const posts = await this.prismaService.post.findMany({
       where: {
         OR: [
@@ -284,6 +309,10 @@ export class PostService {
     if (comment.user_id !== user.id) {
       throw new UnauthorizedException('You can only delete your own comments');
     }
+
+    await this.prismaService.comment.delete({
+      where: { id: commentId },
+    });
 
     return 'deleted';
   }

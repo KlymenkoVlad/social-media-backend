@@ -38,7 +38,7 @@ model User {
   surname          String?
   age              Int?
   image_url        String?
-  description      String?
+  description      String?         @db.VarChar(50) 
   password         String
   posts            Post[]
   profileColor     Colors          @default(GRAY)
@@ -49,8 +49,24 @@ model User {
   sentRequests     FriendRequest[] @relation("SentRequests")
   receivedRequests FriendRequest[] @relation("ReceivedRequests")
 
+  community Community?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Community {
+  id           Int     @id @default(autoincrement())
+  name         String  @unique @db.VarChar(25) 
+  image_url    String
+  description  String? @db.VarChar(50)  
+  user_id      Int     @unique
+  user         User    @relation(fields: [user_id], references: [id])
+  profileColor Colors  @default(GRAY)
+  posts        Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Friend {
@@ -79,16 +95,21 @@ model FriendRequest {
 }
 
 model Post {
-  id         Int       @id @default(autoincrement())
-  title      String?   @db.VarChar(50)
-  text       String    @db.VarChar(3000)
-  image_url  String?
-  user_id    Int
-  user       User      @relation(fields: [user_id], references: [id])
-  likes      Like[]
-  comments   Comment[]
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  id          Int        @id @default(autoincrement())
+  title       String?    @db.VarChar(50)
+  text        String     @db.VarChar(3000)
+  image_url   String?
+
+  likes       Like[]
+  comments    Comment[]
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  user_id     Int
+  user        User       @relation(fields: [user_id], references: [id])
+
+  community   Community? @relation(fields: [communityId], references: [id])
+  communityId Int?
 }
 
 model Like {

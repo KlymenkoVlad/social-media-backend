@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -15,6 +15,11 @@ export class CreatePostDto {
   @IsString()
   @Expose({ name: 'image_url' })
   imageUrl: string;
+
+  @IsOptional()
+  @Expose({ name: 'community_id' })
+  @IsNumber()
+  communityId: number;
 }
 
 export class CommentPostDto {

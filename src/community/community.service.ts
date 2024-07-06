@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Colors } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -24,6 +28,17 @@ export class CommunityService {
 
   async createCommunity(userId: number, data: CreateCommunity) {
     console.log(data, userId);
+
+    const community = await this.prismaService.community.findUnique({
+      where: {
+        user_id: +userId,
+      },
+    });
+
+    if (community) {
+      throw new ConflictException('Community already exists');
+    }
+
     return await this.prismaService.community.create({
       data: {
         ...data,
@@ -100,14 +115,10 @@ export class CommunityService {
     return 'deleted';
   }
 
-  async updateCommunity(
-    id: number,
-    userId: number,
-    data: Partial<CreateCommunity>,
-  ) {
+  async updateCommunity(userId: number, data: Partial<CreateCommunity>) {
     const community = await this.prismaService.community.findUnique({
       where: {
-        id,
+        user_id: userId,
       },
     });
 
@@ -121,12 +132,29 @@ export class CommunityService {
 
     return await this.prismaService.community.update({
       where: {
-        id,
+        user_id: userId,
       },
       data: {
         ...data,
       },
     });
+  }
+
+  async getMyCommunity(userId: number) {
+    const community = await this.prismaService.community.findUnique({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    if (!community) {
+      throw new NotFoundException('Community not found');
+    }
+
+    return {
+      status: 'success',
+      community,
+    };
   }
 
   async updateColor(id: number, body: { color: string }) {

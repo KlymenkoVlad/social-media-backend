@@ -55,6 +55,12 @@ export class CommunityController {
     );
   }
 
+  @Get('me')
+  @UseGuards(AuthGuard)
+  async getMyCommunity(@User() user: UserPayload) {
+    return await this.communityService.getMyCommunity(user.id);
+  }
+
   @Get('exist')
   @UseGuards(AuthGuard)
   async isCommunityExist(@User() user: UserPayload) {
@@ -83,13 +89,12 @@ export class CommunityController {
     await this.communityService.updateColor(user.id, body);
   }
 
-  @Patch(':id')
+  @Patch('')
   @UseGuards(AuthGuard)
   async updateCommunity(
     @User() user: UserPayload,
-    @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateCommunityDto,
   ) {
-    return await this.communityService.updateCommunity(id, user.id, data);
+    return await this.communityService.updateCommunity(user.id, data);
   }
 }

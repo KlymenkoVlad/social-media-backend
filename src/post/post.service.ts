@@ -23,15 +23,15 @@ const PostInclude = {
   comments: {
     select: {
       text: true,
-      user_id: true,
+      userId: true,
       id: true,
-      created_at: true,
-      updated_at: true,
-      post_id: true,
+      createdAt: true,
+      updatedAt: true,
+      postId: true,
       user: {
         select: {
           username: true,
-          image_url: true,
+          imageUrl: true,
         },
       },
     },
@@ -39,15 +39,16 @@ const PostInclude = {
   user: {
     select: {
       username: true,
-      image_url: true,
+      imageUrl: true,
     },
   },
 
   community: {
     select: {
       name: true,
-      image_url: true,
+      imageUrl: true,
       id: true,
+      subscribed: true,
     },
   },
 };
@@ -65,8 +66,8 @@ export class PostService {
       data: {
         title: data.title,
         text: data.text,
-        image_url: data.imageUrl,
-        user_id: userId,
+        imageUrl: data.imageUrl,
+        userId,
         communityId: data.communityId,
       },
 
@@ -83,7 +84,7 @@ export class PostService {
     await this.prismaService.post.delete({
       where: {
         id,
-        user_id: userId,
+        userId,
       },
     });
 
@@ -98,8 +99,9 @@ export class PostService {
       cursor: cursor ? { id: cursor } : undefined,
       skip: cursor ? 1 : 0, // Skip the cursor record if cursor is provided
       include: PostInclude,
+
       orderBy: {
-        created_at: sortBy === 'old' ? 'asc' : 'desc',
+        createdAt: sortBy === 'old' ? 'asc' : 'desc',
       },
     });
 
@@ -128,7 +130,7 @@ export class PostService {
   ) {
     const posts = await this.prismaService.post.findMany({
       where: {
-        user_id: id,
+        userId: id,
         communityId: null,
       },
       take: take + 1,
@@ -136,7 +138,7 @@ export class PostService {
       skip: cursor ? 1 : 0,
       include: PostInclude,
       orderBy: {
-        created_at: sortBy === 'old' ? 'asc' : 'desc',
+        createdAt: sortBy === 'old' ? 'asc' : 'desc',
       },
     });
 
@@ -172,7 +174,7 @@ export class PostService {
       skip: cursor ? 1 : 0,
       include: PostInclude,
       orderBy: {
-        created_at: sortBy === 'old' ? 'asc' : 'desc',
+        createdAt: sortBy === 'old' ? 'asc' : 'desc',
       },
     });
 
@@ -219,7 +221,7 @@ export class PostService {
       skip: +cursor ? 1 : 0,
       include: PostInclude,
       orderBy: {
-        created_at: 'desc',
+        createdAt: 'desc',
       },
     });
 
@@ -242,12 +244,12 @@ export class PostService {
 
   async likePost(id: number, user: UserPayload) {
     const like = await this.prismaService.like.findUnique({
-      where: { user_id: user.id, post_id: id },
+      where: { userId: user.id, postId: id },
     });
 
     if (like) {
       await this.prismaService.like.delete({
-        where: { post_id: id, user_id: user.id },
+        where: { postId: id, userId: user.id },
       });
       return {
         status: 'deleted',
@@ -255,8 +257,8 @@ export class PostService {
     } else {
       return this.prismaService.like.create({
         data: {
-          user_id: user.id,
-          post_id: id,
+          userId: user.id,
+          postId: id,
         },
       });
     }
@@ -276,16 +278,16 @@ export class PostService {
     const comment = await this.prismaService.comment.create({
       data: {
         text,
-        user_id: user.id,
-        post_id: postId,
+        userId: user.id,
+        postId: postId,
       },
       select: {
         text: true,
-        user_id: true,
+        userId: true,
         id: true,
-        created_at: true,
-        updated_at: true,
-        post_id: true,
+        createdAt: true,
+        updatedAt: true,
+        postId: true,
         user: {
           select: {
             username: true,
@@ -306,7 +308,7 @@ export class PostService {
       throw new NotFoundException('Comment not found');
     }
 
-    if (comment.user_id !== user.id) {
+    if (comment.userId !== user.id) {
       throw new UnauthorizedException('You can only delete your own comments');
     }
 

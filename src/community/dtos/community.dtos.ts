@@ -6,7 +6,7 @@ export class CreateCommunityDto {
   name: string;
 
   @IsString()
-  image_url: string;
+  imageUrl: string;
 
   @IsOptional()
   @IsString()
@@ -21,7 +21,7 @@ export class UpdateCommunityDto {
 
   @IsOptional()
   @IsString()
-  image_url: string;
+  imageUrl: string;
 
   @IsOptional()
   @IsString()

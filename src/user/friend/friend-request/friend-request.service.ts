@@ -18,7 +18,7 @@ export class FriendRequestService {
             username: true,
             name: true,
             id: true,
-            image_url: true,
+            imageUrl: true,
           },
         },
       },

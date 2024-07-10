@@ -9,7 +9,7 @@ interface UpdateUserParams {
   username: string;
   surname: string;
   age: number;
-  image_url: string;
+  imageUrl: string;
   description: string;
 }
 
@@ -90,7 +90,7 @@ export class UserService {
       },
       select: {
         id: true,
-        image_url: true,
+        imageUrl: true,
         username: true,
         name: true,
       },
@@ -112,7 +112,7 @@ export class UserService {
       cursor: +cursor ? { id: +cursor } : undefined,
       skip: +cursor ? 1 : 0,
       orderBy: {
-        created_at: 'desc',
+        createdAt: 'desc',
       },
     });
 

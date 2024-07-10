@@ -5,10 +5,11 @@ import {
 } from '@nestjs/common';
 import { Colors } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SubscriptionInclude } from './subscription/subscription.service';
 
 interface CreateCommunity {
   name: string;
-  image_url: string;
+  imageUrl: string;
   description?: string;
 }
 
@@ -17,8 +18,11 @@ const CommunityInclude = {
   user: {
     select: {
       username: true,
-      image_url: true,
+      imageUrl: true,
     },
+  },
+  subscribed: {
+    include: SubscriptionInclude,
   },
 };
 
@@ -31,7 +35,7 @@ export class CommunityService {
 
     const community = await this.prismaService.community.findUnique({
       where: {
-        user_id: +userId,
+        userId: +userId,
       },
     });
 
@@ -42,7 +46,7 @@ export class CommunityService {
     return await this.prismaService.community.create({
       data: {
         ...data,
-        user_id: +userId,
+        userId: +userId,
       },
     });
   }
@@ -102,7 +106,7 @@ export class CommunityService {
       throw new NotFoundException('Community not found');
     }
 
-    if (community.user_id !== userId) {
+    if (community.userId !== userId) {
       throw new NotFoundException('You cannot delete this community');
     }
 
@@ -118,7 +122,7 @@ export class CommunityService {
   async updateCommunity(userId: number, data: Partial<CreateCommunity>) {
     const community = await this.prismaService.community.findUnique({
       where: {
-        user_id: userId,
+        userId,
       },
     });
 
@@ -126,13 +130,13 @@ export class CommunityService {
       throw new NotFoundException('Community not found');
     }
 
-    if (community.user_id !== userId) {
+    if (community.userId !== userId) {
       throw new NotFoundException('You cannot update this community');
     }
 
     return await this.prismaService.community.update({
       where: {
-        user_id: userId,
+        userId,
       },
       data: {
         ...data,
@@ -143,8 +147,9 @@ export class CommunityService {
   async getMyCommunity(userId: number) {
     const community = await this.prismaService.community.findUnique({
       where: {
-        user_id: userId,
+        userId,
       },
+      include: CommunityInclude,
     });
 
     if (!community) {
@@ -158,8 +163,12 @@ export class CommunityService {
   }
 
   async updateColor(id: number, body: { color: string }) {
-    await this.prismaService.community.update({
-      where: { id },
+    console.log(body.color);
+
+    return this.prismaService.community.update({
+      where: {
+        userId: id,
+      },
       data: {
         profileColor: body.color as Colors,
       },
@@ -169,7 +178,7 @@ export class CommunityService {
   async isCommunityExist(userId: number) {
     const community = await this.prismaService.community.findUnique({
       where: {
-        user_id: userId,
+        userId,
       },
     });
 

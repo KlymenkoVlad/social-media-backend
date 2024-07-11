@@ -49,7 +49,7 @@ export class PostController {
   @Get()
   async getAllPosts(
     @Query('cursor') cursor?: number,
-    @Query('take') take = 2,
+    @Query('take') take = 5,
     @Query('sortBy') sortBy?: string,
   ) {
     return this.postService.getAllPosts(
@@ -65,7 +65,7 @@ export class PostController {
   async findPosts(
     @Param('text') text: string,
     @Query('cursor') cursor?: number,
-    @Query('take') take = 2,
+    @Query('take') take = 5,
   ) {
     return this.postService.findPosts(text, cursor, take);
   }
@@ -75,10 +75,25 @@ export class PostController {
   async getAllPostsByUserId(
     @Param('id', ParseIntPipe) id: number,
     @Query('cursor') cursor?: number,
-    @Query('take') take = 2,
+    @Query('take') take = 5,
     @Query('sortBy') sortBy?: string,
   ) {
     return this.postService.getAllPostsByUserId(id, +cursor, sortBy, +take);
+  }
+
+  @Get('community/:id')
+  async getAllPostsByCommunityId(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('cursor') cursor?: number,
+    @Query('take') take = 5,
+    @Query('sortBy') sortBy?: string,
+  ) {
+    return this.postService.getAllPostsByCommunityId(
+      id,
+      +cursor,
+      sortBy,
+      +take,
+    );
   }
 
   @Get(':id')

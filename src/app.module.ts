@@ -9,6 +9,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { UserInterceptor } from './user/interceptors/user.interceptors';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
+import { CommunityModule } from './community/community.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
     PostModule,
     HttpModule,
     ConfigModule.forRoot(),
+    CommunityModule,
   ],
   controllers: [AppController],
   providers: [

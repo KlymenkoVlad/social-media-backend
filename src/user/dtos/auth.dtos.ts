@@ -36,6 +36,7 @@ export class SignupDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   description: string;
 
   @IsString()

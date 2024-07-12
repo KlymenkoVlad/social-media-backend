@@ -189,7 +189,7 @@ export class CommunityService {
     }
 
     return {
-      status: true,
+      id: community.id,
     };
   }
 }
